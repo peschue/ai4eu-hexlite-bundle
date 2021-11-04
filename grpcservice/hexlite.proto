@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+// this is the same interface as the generic ASP solver of the "AI4EU Sudoku Hello World"
+
+message KeyValuePair {
+  // if the key starts with "file:" the value is the content of a file (utf8 encoded) stored before starting the solver process
+  // this can be used to use custom plugins (python source code)
+  // this can be used to provide files to external atoms (for example JSON and OWL files for the OWLAPI plugin)
+
+  // otherwise command line parameters are created from key and value as
+  // "key=value" if the value is nonempty,
+  // "key" if the value is empty.
+
+  // note that hexlite is always called with the json output plugin
+  string key = 1;
+  string value = 2;
+}
+
+message Parameters {
+  int32 number_of_answers = 1;
+
+  // not interpreted by hexlite
+  bool return_only_optimal_answers = 2;
+
+  repeated KeyValuePair additional_parameters = 3;
+}
+
+message SolverJob {
+  // HEX Program
+  string program = 1;
+  Parameters parameters = 2;
+}
+
+message CostElement {
+  int32 level = 1;
+  int32 cost = 2;
+}
+
+message Answerset {
+  repeated string atoms = 1;
+  repeated CostElement costs = 2;
+  bool is_known_optimal = 3;  // only true for cost 0
+}
+
+message ResultDescription {
+  bool success = 1;
+  // meaningless for hexlite
+  int32 code = 2;
+  repeated string messages = 3;
+}
+
+message SolveResultAnswersets {
+  ResultDescription description = 1;
+  repeated Answerset answers = 2;
+}
+
+// here we extend the interface to also permit streaming out solutions one by one
+message SolveResultStreamItem {
+    // the value that would be returned for the first answer
+    ResultDescription description = 1;
+    // the current answer, or empty if there are no (further) answers
+    Answerset answer = 2;
+}
+
+service HexliteAnswerSetSolver {
+    rpc solve(SolverJob) returns (SolveResultAnswersets);
+    rpc solveIntoStream(SolverJob) returns (stream SolveResultStreamItem);
+}

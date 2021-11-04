@@ -1,0 +1,5 @@
+{
+    "grpcport": 8061,
+    "executable": "/opt/bin/hexlite",
+    "builtin_plugins_plugindir": "/opt/hexlite/plugins/"
+}
