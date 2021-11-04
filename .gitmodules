@@ -1,0 +1,6 @@
+[submodule "hexlite"]
+	path = hexlite
+	url = git@github.com:hexhex/hexlite.git
+[submodule "hexlite-owlapi-plugin"]
+	path = hexlite-owlapi-plugin
+	url = git@github.com:hexhex/hexlite-owlapi-plugin.git
