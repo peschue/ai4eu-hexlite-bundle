@@ -8,6 +8,7 @@ ARG MAVEN_VERSION=3.8.3
 ARG PYTHON=python3.7
 ARG HEXLITE_JAVA_PLUGIN_API_JAR_VERSION_TAG=1.4.0
 ARG HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH=/opt/hexlite/java-api/target/hexlite-java-plugin-api-${HEXLITE_JAVA_PLUGIN_API_JAR_VERSION_TAG}.jar
+ARG HEXLITE_OWLAPI_PLUGIN_JAR_WITH_PATH=/opt/hexlite-owlapi-plugin/plugin/target/owlapiplugin-1.1.0.jar
 
 RUN mkdir -p /opt/lib/$PYTHON/site-packages/
 
@@ -18,6 +19,10 @@ RUN set -ex ; \
     wget git ca-certificates \
     build-essential $PYTHON python3-setuptools python3-dev python3-pip lua5.3 \
     openjdk-11-jre-headless openjdk-11-jdk-headless
+
+#
+# hexlite
+#
 
 # install clingo via pip and jpype
 RUN set -ex ; \
@@ -40,13 +45,47 @@ COPY hexlite /opt/hexlite
 RUN set -ex ; \
   cd /opt/hexlite ; \
   python3 setup.py install --prefix=/opt ; \
-  mvn compile package install
+  mvn compile package install ; \
+  find -name ".git" |xargs rm -rf
 
-# run tests (optional)
-# RUN set -ex ; \
-#   cd /opt/hexlite/tests ; \
-#   CLASSPATH=${HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH} \
-#   ./run-tests.sh
+#
+# hexlite-owlapi-plugin
+#
+
+COPY hexlite-owlapi-plugin /opt/hexlite-owlapi-plugin
+
+# build and remove unnecessary files
+RUN set -ex ; \
+  cd /opt/hexlite-owlapi-plugin/plugin ; \
+  CLASSPATH=${HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH} \
+  mvn compile package install ; \
+  find -name ".git" |xargs rm -rf
+
+#
+# tests
+#
+
+# run hexlite tests (optional)
+RUN set -ex ; \
+  cd /opt/hexlite/tests ; \
+  CLASSPATH=${HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH} \
+  ./run-tests.sh
+
+# run hexlite-owlapi-plugin tests (optional)
+RUN set -ex ; \
+  cd /opt/hexlite-owlapi-plugin/examples/koala ; \
+  CLASSPATH=${HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH}:${HEXLITE_OWLAPI_PLUGIN_JAR_WITH_PATH} \
+  /opt/bin/hexlite --pluginpath /opt/hexlite/plugins/ \
+    --plugin javaapiplugin  at.ac.tuwien.kr.hexlite.OWLAPIPlugin \
+    --number 33 --stats --flpcheck=none querykoala1.hex ; \
+  CLASSPATH=${HEXLITE_JAVA_PLUGIN_API_JAR_WITH_PATH}:${HEXLITE_OWLAPI_PLUGIN_JAR_WITH_PATH} \
+  /opt/bin/hexlite --pluginpath /opt/hexlite/plugins/ \
+    --plugin javaapiplugin  at.ac.tuwien.kr.hexlite.OWLAPIPlugin \
+    --number 33 --stats --flpcheck=none querykoala2.hex
+
+#
+# service
+#
 
 # copy sources for service
 RUN mkdir /app

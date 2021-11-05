@@ -32,7 +32,7 @@ class FileParameter:
 class GRPCServicer(pb_grpc.HexliteAnswerSetSolverServicer):
     def __init__(self, config):
         # for debugging you want to set this to True
-        self.delete_temporary_directories = False
+        self.delete_temporary_directories = True
 
         self.executable = config['executable']
         self.builtin_plugins_plugindir = config['builtin_plugins_plugindir']

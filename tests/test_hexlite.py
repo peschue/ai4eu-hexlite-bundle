@@ -3,11 +3,12 @@
 import logging
 import grpc
 import json
+import os
 
 import hexlite_pb2_grpc as pb_grpc
 import hexlite_pb2 as pb
 
-configfile = "config.json"
+configfile = os.environ.get('CONFIG', "config.json")
 config = json.load(open(configfile, 'rt'))
 
 logging.basicConfig(level=logging.DEBUG)
